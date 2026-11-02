@@ -1,0 +1,14 @@
+---
+// Reserved ad space. Prints nothing until ads are switched on in Site settings
+// and code is added for this slot.
+import site from '../data/site.json';
+interface Props { slot: 'after_facts' | 'mid_content' | 'end_of_content' }
+const code = (site as Record<string, unknown>)[`ads_code_${Astro.props.slot}`] as string | undefined;
+const show = site.ads_enabled && !!code?.trim();
+---
+{show && (
+  <aside class="ad" aria-label="Advertisement">
+    <span class="ad__label">Advertisement</span>
+    <Fragment set:html={code} />
+  </aside>
+)}

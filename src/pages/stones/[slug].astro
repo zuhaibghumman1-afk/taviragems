@@ -1,0 +1,127 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import StoneCard from '../../components/StoneCard.astro';
+import Rarity from '../../components/Rarity.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getSection, getColor } from '../../data/taxonomy';
+import site from '../../data/site.json';
+import {
+  getStones, type Stone, hardnessText, formulaHtml, monthName, categoryUrl, categoryName, stoneArt,
+} from '../../lib/stones';
+
+export async function getStaticPaths() {
+  const stones = await getStones();
+  return stones.map((stone) => ({ params: { slug: stone.id }, props: { stone, all: stones } }));
+}
+
+const { stone, all } = Astro.props as { stone: Stone; all: Stone[] };
+const d = stone.data;
+const { Content, headings } = await render(stone);
+const section = getSection(d.section)!;
+const cat = d.categories[0];
+
+const facts: { label: string; html: string }[] = [];
+const add = (label: string, value?: string | null, html = false) => {
+  if (value && String(value).trim()) facts.push({ label, html: html ? value : String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;') });
+};
+add('Mineral family', d.mineral_family);
+add('Rock type', d.rock_type);
+if (d.chemical_formula) add('Chemical formula', formulaHtml(d.chemical_formula), true);
+add('Mohs hardness', hardnessText(stone));
+add('Crystal system', d.crystal_system);
+add('Refractive index', d.refractive_index);
+add('Specific gravity', d.specific_gravity);
+add('Main sources', d.main_sources);
+if (d.colors.length) add('Colors', d.colors.map((c) => `<a href="/color/${c}/">${getColor(c)?.name ?? c}</a>`).join(', '), true);
+add('Finishes', d.finishes.join(', '));
+add('Best uses', d.best_uses);
+add('Porosity', d.porosity);
+if (d.birth_months.length) add('Birthstone', d.birth_months.map((m) => `<a href="/birthstones/${m}/">${monthName(m)}</a>`).join(', '), true);
+add('Anniversary', d.anniversary);
+add('Price tier', d.price_tier);
+
+const related = all
+  .filter((s) => s.id !== stone.id && s.data.categories.some((c) => d.categories.includes(c)))
+  .concat(all.filter((s) => s.id !== stone.id && s.data.section === d.section && !s.data.categories.some((c) => d.categories.includes(c))))
+  .slice(0, 4);
+
+const updated = d.updated ?? undefined;
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: d.title,
+    description: d.summary ?? d.tagline ?? undefined,
+    image: d.image ? new URL(d.image, 'https://taviragems.com').href : undefined,
+    author: { '@type': 'Organization', name: site.author },
+    publisher: { '@type': 'Organization', name: site.name },
+    dateModified: updated?.toISOString(),
+    mainEntityOfPage: `https://taviragems.com/stones/${stone.id}/`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://taviragems.com/' },
+      { '@type': 'ListItem', position: 2, name: section.name, item: `https://taviragems.com/${section.slug}/` },
+      ...(cat ? [{ '@type': 'ListItem', position: 3, name: categoryName(cat), item: `https://taviragems.com${categoryUrl(cat)}` }] : []),
+      { '@type': 'ListItem', position: cat ? 4 : 3, name: d.title },
+    ],
+  },
+];
+---
+<Base title={`${d.title}: Meaning, History, Rarity & Facts`} description={d.summary ?? d.tagline ?? undefined} image={d.image ?? undefined} type="article" schema={schema}>
+  <section class="dark">
+    <div class="wrap stone-hero">
+      <div>
+        <ol class="crumbs">
+          <li><a href="/">Home</a></li>
+          <li><a href={`/${section.slug}/`}>{section.name}</a></li>
+          {cat && <li><a href={categoryUrl(cat)}>{categoryName(cat)}</a></li>}
+          <li aria-current="page">{d.title}</li>
+        </ol>
+        <h1>{d.title}</h1>
+        {d.tagline && <p class="stone-hero__tagline">{d.tagline}</p>}
+        {d.summary && <p class="stone-hero__summary">{d.summary}</p>}
+      </div>
+      <div class="stone-hero__media">
+        {d.image
+          ? <img class="photo" src={d.image} alt={d.image_alt ?? d.title} fetchpriority="high" width="700" height="700" />
+          : <Fragment set:html={stoneArt(stone)} />}
+        {d.image && d.image_credit && (
+          <span class="stone-hero__credit">Image: {d.image_credit_url ? <a href={d.image_credit_url} rel="nofollow noopener" target="_blank">{d.image_credit}</a> : d.image_credit}</span>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap stone-layout">
+    <article class="prose" data-pagefind-body>
+      <h2 class="sr-only" data-pagefind-meta="title">{d.title}</h2>
+      <Content />
+      <AdSlot slot="end_of_content" />
+      {updated && <p class="updated">Last updated {updated.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} by the Tavira Gems Editorial Team.</p>}
+    </article>
+    <aside aria-label="Quick facts">
+      <div class="qf">
+        <p class="qf__eyebrow">Quick Facts</p>
+        <h2>{d.title} at a glance</h2>
+        <dl>
+          {facts.map((f) => <div><dt>{f.label}</dt><dd set:html={f.html} /></div>)}
+          {d.rarity && <div><dt>Rarity</dt><dd><Rarity slug={d.rarity} /></dd></div>}
+        </dl>
+      </div>
+      <AdSlot slot="after_facts" />
+    </aside>
+  </div>
+
+  {related.length > 0 && (
+    <section class="band linen">
+      <div class="wrap">
+        <div class="head"><div class="head__text"><p class="eyebrow">Keep exploring</p><h2 class="h2">Related stones</h2></div></div>
+        <div class="cards">{related.map((s) => <StoneCard stone={s} />)}</div>
+      </div>
+    </section>
+  )}
+</Base>

@@ -1,0 +1,55 @@
+---
+import Base from '../../layouts/Base.astro';
+import StoneCard from '../../components/StoneCard.astro';
+import { sections } from '../../data/taxonomy';
+import { getStones } from '../../lib/stones';
+
+const stones = await getStones();
+const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const groups = letters
+  .map((l) => ({ letter: l, stones: stones.filter((s) => s.data.title.toUpperCase().startsWith(l)) }))
+  .filter((g) => g.stones.length);
+const has = new Set(groups.map((g) => g.letter));
+---
+<Base title="Stone Encyclopedia A–Z" description="Every gemstone, decorative stone and mineral in the Tavira Gems encyclopedia, from A to Z.">
+  <section class="dark">
+    <div class="wrap page-head">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li aria-current="page">A–Z Index</li></ol>
+      <h1>The stone encyclopedia</h1>
+      <p class="intro">Every gemstone, decorative stone and mineral on Tavira Gems, from A to Z.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <nav class="letters" aria-label="Jump to letter">
+        {letters.map((l) => (has.has(l) ? <a href={`#letter-${l}`}>{l}</a> : <span aria-hidden="true">{l}</span>))}
+      </nav>
+      <div class="filters" role="group" aria-label="Filter by section">
+        <button type="button" aria-pressed="true" data-filter="all">All</button>
+        {sections.map((s) => <button type="button" aria-pressed="false" data-filter={s.slug}>{s.name}</button>)}
+      </div>
+      {groups.length ? groups.map((g) => (
+        <div class="letter-group" id={`letter-${g.letter}`}>
+          <h2>{g.letter}</h2>
+          <div class="cards">{g.stones.map((s) => <StoneCard stone={s} />)}</div>
+        </div>
+      )) : <p class="empty">Stones are being written and will appear here soon.</p>}
+    </div>
+  </section>
+  <script>
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+    buttons.forEach((btn) => btn.addEventListener('click', () => {
+      const f = btn.dataset.filter;
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      document.querySelectorAll<HTMLElement>('.letter-group').forEach((group) => {
+        let visible = 0;
+        group.querySelectorAll<HTMLElement>('.card').forEach((card) => {
+          const show = f === 'all' || card.dataset.section === f;
+          card.hidden = !show;
+          if (show) visible++;
+        });
+        group.hidden = visible === 0;
+      });
+    }));
+  </script>
+</Base>

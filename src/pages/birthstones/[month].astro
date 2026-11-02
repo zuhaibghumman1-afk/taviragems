@@ -1,0 +1,19 @@
+---
+import Listing from '../../layouts/Listing.astro';
+import { months } from '../../data/taxonomy';
+import { getStones } from '../../lib/stones';
+
+export function getStaticPaths() {
+  return months.map((m) => ({ params: { month: m.slug } }));
+}
+const month = months.find((m) => m.slug === Astro.params.month)!;
+const stones = (await getStones()).filter((s) => s.data.birth_months.includes(month.slug));
+---
+<Listing
+  title={`${month.name} Birthstones`}
+  seoTitle={`${month.name} Birthstone: Meaning, Colors & Facts`}
+  description={month.text}
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Birthstones', url: '/birthstones/' }, { name: month.name }]}
+  subcats={months.map((m) => ({ name: m.name, url: `/birthstones/${m.slug}/`, current: m.slug === month.slug }))}
+  stones={stones}
+/>

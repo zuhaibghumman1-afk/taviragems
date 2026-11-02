@@ -1,0 +1,31 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Search" description="Search every stone, guide and story on Tavira Gems.">
+  <section class="dark">
+    <div class="wrap page-head">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li aria-current="page">Search</li></ol>
+      <h1>Search</h1>
+      <p class="intro">Search every stone, guide and story on Tavira Gems.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap" style="max-width:860px">
+      <link href="/pagefind/pagefind-ui.css" rel="stylesheet">
+      <div id="search"></div>
+      <noscript><p class="empty">Search needs JavaScript. You can also browse the <a href="/stones/">A–Z index</a>.</p></noscript>
+    </div>
+  </section>
+  <script is:inline src="/pagefind/pagefind-ui.js"></script>
+  <script is:inline>
+    window.addEventListener('DOMContentLoaded', function () {
+      if (!window.PagefindUI) {
+        document.getElementById('search').innerHTML = '<p class="empty">Search will be available on the live site. Meanwhile, browse the <a href="/stones/">A–Z index</a>.</p>';
+        return;
+      }
+      var ui = new PagefindUI({ element: '#search', showSubResults: true, showImages: false, resetStyles: false });
+      var q = new URLSearchParams(location.search).get('q');
+      if (q) ui.triggerSearch(q);
+    });
+  </script>
+</Base>

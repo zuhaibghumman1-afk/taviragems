@@ -1,0 +1,54 @@
+---
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import StoneCard from './StoneCard.astro';
+import AdSlot from './AdSlot.astro';
+import site from '../data/site.json';
+import { articleKinds } from '../data/taxonomy';
+import { type Article, getStones, readingMinutes } from '../lib/stones';
+
+interface Props { article: Article }
+const { article } = Astro.props;
+const d = article.data;
+const kind = articleKinds.find((k) => k.slug === d.kind)!;
+const { Content } = await render(article);
+const stones = (await getStones()).filter((s) => d.related_stones.includes(s.id));
+const fmt = (x: Date) => x.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: d.title,
+  description: d.summary ?? undefined,
+  datePublished: d.date.toISOString(),
+  dateModified: (d.updated ?? d.date).toISOString(),
+  author: { '@type': 'Organization', name: site.author },
+  publisher: { '@type': 'Organization', name: site.name },
+  mainEntityOfPage: `https://taviragems.com/${d.kind}/${article.id}/`,
+};
+---
+<Base title={d.title} description={d.summary ?? undefined} image={d.image ?? undefined} type="article" schema={schema}>
+  <section class="dark">
+    <div class="wrap page-head" style="max-width:calc(var(--read) + 32px)">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li><a href={`/${kind.slug}/`}>{kind.title}</a></li><li aria-current="page">{d.title}</li></ol>
+      <h1>{d.title}</h1>
+      {d.summary && <p class="intro">{d.summary}</p>}
+      <p class="intro" style="font-size:14px;margin-top:18px">By {site.author} · {fmt(d.date)} · {readingMinutes(article.body ?? '')} min read</p>
+    </div>
+  </section>
+  <div class="wrap" style="max-width:calc(var(--read) + 32px);padding-block:64px 96px">
+    {d.image && <img class="photo" src={d.image} alt={d.image_alt ?? ''} style="margin-bottom:40px;aspect-ratio:16/9" />}
+    <article class="prose" data-pagefind-body>
+      <Content />
+    </article>
+    <AdSlot slot="end_of_content" />
+    {d.updated && <p class="updated">Last updated {fmt(d.updated)}.</p>}
+  </div>
+  {stones.length > 0 && (
+    <section class="band linen">
+      <div class="wrap">
+        <div class="head"><div class="head__text"><p class="eyebrow">Stones in this article</p><h2 class="h2">Explore further</h2></div></div>
+        <div class="cards">{stones.map((s) => <StoneCard stone={s} />)}</div>
+      </div>
+    </section>
+  )}
+</Base>

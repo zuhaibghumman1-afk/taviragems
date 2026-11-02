@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import { months } from '../../data/taxonomy';
+import { getStones, stoneUrl } from '../../lib/stones';
+
+const stones = await getStones();
+const rows = months.map((m) => ({ ...m, stones: stones.filter((s) => s.data.birth_months.includes(m.slug)) }));
+---
+<Base title="Birthstones by Month: Complete Guide" description="The modern birthstone for every month of the year, with the meaning, colors and history of each stone.">
+  <section class="dark">
+    <div class="wrap page-head">
+      <ol class="crumbs"><li><a href="/">Home</a></li><li aria-current="page">Birthstones</li></ol>
+      <h1>Birthstones by month</h1>
+      <p class="intro">The modern birthstone list used in the United States, with a guide to every stone.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <div class="cards cards--3">
+        {rows.map((m) => (
+          <a class="card" href={`/birthstones/${m.slug}/`}>
+            <div class="card__body" style="padding:28px 24px;gap:10px">
+              <span class="card__cat">{m.name}</span>
+              <h3>{m.stones.length ? m.stones.map((s) => s.data.title).join(' & ') : m.name + ' birthstones'}</h3>
+              <span class="card__spec">{m.text}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,19 @@
+---
+import Listing from '../../layouts/Listing.astro';
+import { colors } from '../../data/taxonomy';
+import { getStones } from '../../lib/stones';
+
+export function getStaticPaths() {
+  return colors.map((c) => ({ params: { color: c.slug } }));
+}
+const color = colors.find((c) => c.slug === Astro.params.color)!;
+const stones = (await getStones()).filter((s) => s.data.colors.includes(color.slug));
+---
+<Listing
+  title={`${color.name} Stones`}
+  seoTitle={`${color.name} Gemstones & Stones: Names, Facts & Guide`}
+  description={`Gemstones and decorative stones found in ${color.name.toLowerCase()}, from famous precious stones to rare collector finds.`}
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Colors', url: '/stones/' }, { name: color.name }]}
+  subcats={colors.map((c) => ({ name: c.name, url: `/color/${c.slug}/`, current: c.slug === color.slug }))}
+  stones={stones}
+/>

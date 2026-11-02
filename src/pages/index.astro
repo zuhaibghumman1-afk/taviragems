@@ -1,0 +1,256 @@
+---
+import Base from '../layouts/Base.astro';
+import StoneCard from '../components/StoneCard.astro';
+import SectionHead from '../components/SectionHead.astro';
+import home from '../data/home.json';
+import site from '../data/site.json';
+import { sections, colors as allColors, months } from '../data/taxonomy';
+import {
+  getStones, getArticles, stoneUrl, articleUrl, specLine, hardnessText, stoneArt,
+  gemSvg, marbleSvg, crystalSvg, readingMinutes,
+} from '../lib/stones';
+import { getColor } from '../data/taxonomy';
+
+const stones = await getStones();
+const byId = (id: string) => stones.find((s) => s.id === id);
+
+// Hero
+const heroStone = byId(home.hero_stone);
+const [before, after] = home.hero_title.split(home.hero_highlight);
+const hasHighlight = home.hero_title.includes(home.hero_highlight) && home.hero_highlight;
+
+// Worlds
+const worlds = sections.map((s) => ({
+  ...s,
+  count: stones.filter((x) => x.data.section === s.slug).length,
+  art: s.slug === 'decorative-stones' ? marbleSvg(11) : s.slug === 'crystals-minerals' ? crystalSvg() : gemSvg(getColor('red')!.shades),
+}));
+
+// Featured
+let featured = stones.filter((s) => s.data.featured);
+if (!featured.length) featured = stones;
+featured = featured.slice(0, 8);
+
+// Colors
+const colorSlugs = ['red', 'blue', 'green', 'purple', 'pink', 'yellow', 'white', 'black'];
+const colorItems = colorSlugs.map((slug) => {
+  const c = allColors.find((x) => x.slug === slug)!;
+  const examples = stones.filter((s) => s.data.colors.includes(slug)).slice(0, 2).map((s) => s.data.title);
+  return { ...c, examples };
+});
+
+// Spotlight
+const spot = byId(home.spotlight_stone);
+
+// Birthstone of the month (decided at build time; the site rebuilds daily)
+const month = months[new Date().getMonth()];
+const monthStones = stones.filter((s) => s.data.birth_months.includes(month.slug)).slice(0, 2);
+
+// Articles
+const guides = (await getArticles()).filter((a) => a.data.kind !== 'journal').slice(0, 3);
+const journal = (await getArticles('journal')).slice(0, 3);
+const kindLabel: Record<string, string> = { learn: 'Guide', compare: 'Comparison', journal: 'Journal' };
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: site.name,
+  url: 'https://taviragems.com/',
+  potentialAction: { '@type': 'SearchAction', target: 'https://taviragems.com/search/?q={search_term_string}', 'query-input': 'required name=search_term_string' },
+};
+---
+<Base schema={schema}>
+  <!-- 1. Hero -->
+  <section class="dark">
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">{home.hero_eyebrow}</p>
+        <h1>{hasHighlight ? <>{before}<em>{home.hero_highlight}</em>{after}</> : home.hero_title}</h1>
+        <p class="hero__sub">{home.hero_text}</p>
+        <form class="search" role="search" action="/search/" method="get">
+          <label class="sr-only" for="q">Search stones</label>
+          <input id="q" name="q" type="search" placeholder="Search a stone, color or birthstone…">
+          <button type="submit">Search</button>
+        </form>
+        <p class="popular">Popular: {home.popular.map((p) => <a href={p.url}>{p.label}</a>)}</p>
+      </div>
+      {heroStone ? (
+        <a class="hero-art" href={stoneUrl(heroStone)}>
+          {heroStone.data.image
+            ? <img class="photo" src={heroStone.data.image} alt={heroStone.data.image_alt ?? heroStone.data.title} fetchpriority="high" width="600" height="600" />
+            : <Fragment set:html={stoneArt(heroStone)} />}
+          <span class="hero-cap">{heroStone.data.title} · {specLine(heroStone)}</span>
+        </a>
+      ) : (
+        <div class="hero-art"><Fragment set:html={gemSvg(getColor('blue')!.shades)} /></div>
+      )}
+    </div>
+  </section>
+
+  <!-- 2. Three worlds -->
+  <section class="band">
+    <div class="wrap">
+      <SectionHead eyebrow="Explore" title={home.worlds_title} text={home.worlds_text} />
+      <div class="worlds">
+        {worlds.map((w) => (
+          <a class="world" href={`/${w.slug}/`}>
+            <div class="world__media" set:html={w.art} />
+            <div class="world__body">
+              <span class="world__count">{w.count ? `${w.count} ${w.count === 1 ? 'stone' : 'stones'} · ` : ''}{w.categories.length} categories</span>
+              <h3>{w.name}</h3>
+              <p>{w.description}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Featured stones -->
+  {featured.length > 0 && (
+    <section class="band linen">
+      <div class="wrap">
+        <SectionHead eyebrow="Featured stones" title={home.featured_title} link="/stones/" linkText="View A–Z index" />
+        <div class="cards">{featured.map((s) => <StoneCard stone={s} />)}</div>
+      </div>
+    </section>
+  )}
+
+  <!-- 4. Browse by color -->
+  <section class="band">
+    <div class="wrap">
+      <SectionHead eyebrow="Browse by color" title={home.colors_title} text={home.colors_text} />
+      <div class="colors">
+        {colorItems.map((c) => (
+          <a class="color" href={`/color/${c.slug}/`}>
+            <i style={`background:${c.swatch}`}></i>
+            <b>{c.slug === 'white' ? 'White' : c.name}</b>
+            {c.examples.length > 0 && <span>{c.examples.join(', ')}</span>}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Did you know -->
+  <section class="band dark">
+    <div class="wrap">
+      <SectionHead eyebrow="Did you know?" title={home.facts_title} />
+      <div class="facts">
+        {home.facts.map((f, i) => (
+          <div class="fact">
+            <span class="fact__n">Fact {String(i + 1).padStart(2, '0')}</span>
+            <p class="fact__text">{f.text}</p>
+            {f.url && <a href={f.url}>{f.link_label}</a>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Spotlight -->
+  {spot && (
+    <section class="band">
+      <div class="wrap">
+        <div class="spot">
+          <div class="spot__media">
+            {spot.data.image ? <img class="photo" src={spot.data.image} alt={spot.data.image_alt ?? spot.data.title} loading="lazy" /> : <Fragment set:html={stoneArt(spot)} />}
+          </div>
+          <div class="spot__body">
+            <p class="eyebrow">{home.spotlight_eyebrow}</p>
+            <h2 class="h2">{spot.data.title}{spot.data.tagline ? `, ${spot.data.tagline.charAt(0).toLowerCase()}${spot.data.tagline.slice(1)}` : ''}</h2>
+            {spot.data.summary && <p class="intro">{spot.data.summary}</p>}
+            <dl class="mini">
+              {(spot.data.rock_type || spot.data.mineral_family) && <div><dt>Type</dt><dd>{spot.data.rock_type ?? spot.data.mineral_family}</dd></div>}
+              {spot.data.main_sources && <div><dt>Origin</dt><dd>{spot.data.main_sources}</dd></div>}
+              {spot.data.best_uses && <div><dt>Best for</dt><dd>{spot.data.best_uses}</dd></div>}
+            </dl>
+            <a class="btn" href={stoneUrl(spot)}>Discover {spot.data.title}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- 7. Birthstone of the month -->
+  {monthStones.length > 0 && (
+    <section class="band dark">
+      <div class="wrap birth">
+        <div class="birth__gems">
+          {monthStones.map((s) => (
+            <a class="bgem" href={stoneUrl(s)}>
+              {s.data.image ? <img class="photo" src={s.data.image} alt={s.data.image_alt ?? s.data.title} loading="lazy" /> : <Fragment set:html={stoneArt(s)} />}
+              <b>{s.data.title}</b>
+              {hardnessText(s) && <span>Hardness {hardnessText(s)}</span>}
+            </a>
+          ))}
+        </div>
+        <div class="birth__body">
+          <p class="eyebrow">Birthstone of the month</p>
+          <p class="birth__month">{month.name}</p>
+          <p>{month.text}</p>
+          <div class="btns">
+            <a class="btn btn--gold" href={`/birthstones/${month.slug}/`}>{month.name} birthstones</a>
+            <a class="btn btn--ghost" href="/birthstones/">All 12 months</a>
+          </div>
+          <nav class="months" aria-label="Birthstones by month">
+            {months.map((m) => <a class={m.slug === month.slug ? 'on' : ''} href={`/birthstones/${m.slug}/`}>{m.name.slice(0, 3)}</a>)}
+          </nav>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- 8. Guides & comparisons -->
+  {guides.length > 0 && (
+    <section class="band">
+      <div class="wrap">
+        <SectionHead eyebrow="Learn & compare" title={home.guides_title} link="/learn/" linkText="All guides" />
+        <div class="articles">
+          {guides.map((a) => (
+            <a class="article-card" href={articleUrl(a)}>
+              <div class="article-card__media">{a.data.image ? <img class="photo" src={a.data.image} alt={a.data.image_alt ?? ''} loading="lazy" /> : <Fragment set:html={gemSvg(getColor('white')!.shades)} />}</div>
+              <span class="article-card__kind">{kindLabel[a.data.kind]}</span>
+              <h3>{a.data.title}</h3>
+              {a.data.summary && <p>{a.data.summary}</p>}
+              <span class="article-card__read">{readingMinutes(a.body ?? '')} min read</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- 9. Journal -->
+  {journal.length > 0 && (
+    <section class="band linen">
+      <div class="wrap">
+        <SectionHead eyebrow="From the journal" title={home.journal_title} link="/journal/" linkText="Read the journal" />
+        <div class="articles">
+          {journal.map((a) => (
+            <a class="article-card" href={articleUrl(a)}>
+              <div class="article-card__media">{a.data.image ? <img class="photo" src={a.data.image} alt={a.data.image_alt ?? ''} loading="lazy" /> : <Fragment set:html={gemSvg(getColor('purple')!.shades)} />}</div>
+              <span class="article-card__kind">Journal</span>
+              <h3>{a.data.title}</h3>
+              {a.data.summary && <p>{a.data.summary}</p>}
+              <span class="article-card__read">{readingMinutes(a.body ?? '')} min read</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- 10. Trust -->
+  <section class="band band--tight">
+    <div class="wrap">
+      <div class="trust">
+        <div><p class="eyebrow">Editorial standards</p><h3>{home.trust_title}</h3></div>
+        <div>
+          <p class="trust__sources">{home.trust_sources.map((s, i) => <>{i > 0 && <span>·</span>}{s}</>)}</p>
+          <p class="trust__note">{home.trust_text} <a href="/editorial-standards/">How we research</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

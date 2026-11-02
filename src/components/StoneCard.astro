@@ -1,0 +1,21 @@
+---
+import { type Stone, stoneUrl, primaryCategory, specLine, stoneArt } from '../lib/stones';
+import Rarity from './Rarity.astro';
+interface Props { stone: Stone }
+const { stone } = Astro.props;
+const cat = primaryCategory(stone);
+const spec = specLine(stone);
+---
+<a class="card" href={stoneUrl(stone)} data-section={stone.data.section} data-title={stone.data.title}>
+  <div class="card__media">
+    {stone.data.image
+      ? <img class="photo" src={stone.data.image} alt={stone.data.image_alt ?? stone.data.title} loading="lazy" decoding="async" width="480" height="600" />
+      : <Fragment set:html={stoneArt(stone)} />}
+  </div>
+  <div class="card__body">
+    {cat && <span class="card__cat">{cat.name}</span>}
+    <h3>{stone.data.title}</h3>
+    {spec && <span class="card__spec">{spec}</span>}
+    <Rarity slug={stone.data.rarity} />
+  </div>
+</a>

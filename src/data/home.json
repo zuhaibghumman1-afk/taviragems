@@ -1,0 +1,31 @@
+{
+  "hero_eyebrow": "The stone encyclopedia",
+  "hero_title": "The world of precious & luxury stones",
+  "hero_highlight": "precious",
+  "hero_text": "Gemstones, decorative stones and rare minerals, explained with the care of a museum and the eye of a jeweler.",
+  "hero_stone": "sapphire",
+  "popular": [
+    { "label": "Sapphire", "url": "/stones/sapphire/" },
+    { "label": "Calacatta Marble", "url": "/stones/calacatta-marble/" },
+    { "label": "Alexandrite", "url": "/stones/alexandrite/" },
+    { "label": "Birthstones", "url": "/birthstones/" }
+  ],
+  "worlds_title": "Three worlds of stone",
+  "worlds_text": "From a one-carat ruby to a marble wall, every stone has a story. Start with the world that interests you.",
+  "featured_title": "The icons of the gem world",
+  "colors_title": "Find a stone by its color",
+  "colors_text": "Many stones come in more than one color. Sapphire alone appears in almost every shade except red.",
+  "facts_title": "Stones with surprising stories",
+  "facts": [
+    { "text": "Ruby and sapphire are the same mineral. A trace of chromium is what turns corundum red.", "link_label": "Read about ruby", "url": "/stones/ruby/" },
+    { "text": "Alexandrite looks green in daylight and red under warm lamp light.", "link_label": "Read about alexandrite", "url": "/stones/alexandrite/" },
+    { "text": "Michelangelo carved his David from a single block of marble quarried near Carrara.", "link_label": "Read about Carrara marble", "url": "/stones/carrara-marble/" }
+  ],
+  "spotlight_stone": "calacatta-marble",
+  "spotlight_eyebrow": "Decorative stone spotlight",
+  "guides_title": "Guides to help you choose",
+  "journal_title": "Stories behind the stones",
+  "trust_title": "Written and fact-checked by the Tavira Gems Editorial Team",
+  "trust_sources": ["GIA Gem Encyclopedia", "Smithsonian", "USGS", "Mindat"],
+  "trust_text": "Our articles are researched using respected sources including these, and updated when new information appears."
+}

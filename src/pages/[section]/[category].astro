@@ -1,0 +1,21 @@
+---
+import Listing from '../../layouts/Listing.astro';
+import { sections } from '../../data/taxonomy';
+import { getStones } from '../../lib/stones';
+
+export function getStaticPaths() {
+  return sections.flatMap((s) => s.categories.map((c) => ({ params: { section: s.slug, category: c.slug } })));
+}
+const section = sections.find((s) => s.slug === Astro.params.section)!;
+const category = section.categories.find((c) => c.slug === Astro.params.category)!;
+const stones = (await getStones()).filter((s) => s.data.categories.includes(category.slug));
+const label = section.slug === 'gemstones' ? `${category.name} Gemstones` : section.slug === 'decorative-stones' ? `${category.name}` : category.name;
+---
+<Listing
+  title={label}
+  seoTitle={`${label}: Types, Facts & Guide`}
+  description={`Explore ${category.name.toLowerCase()} ${section.slug === 'gemstones' ? 'gemstones' : 'stones'}: origins, characteristics, rarity and interesting facts, researched by the Tavira Gems Editorial Team.`}
+  crumbs={[{ name: 'Home', url: '/' }, { name: section.name, url: `/${section.slug}/` }, { name: category.name }]}
+  subcats={section.categories.map((c) => ({ name: c.name, url: `/${section.slug}/${c.slug}/`, current: c.slug === category.slug }))}
+  stones={stones}
+/>

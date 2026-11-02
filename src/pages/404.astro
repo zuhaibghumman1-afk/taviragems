@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found" description="This page could not be found.">
+  <section class="dark">
+    <div class="wrap page-head" style="padding-block:96px">
+      <p class="eyebrow">Error 404</p>
+      <h1 style="margin-top:14px">This stone has not been found</h1>
+      <p class="intro">The page may have moved, or the address may be mistyped. Try a search, or explore the encyclopedia.</p>
+      <form class="search" role="search" action="/search/" method="get">
+        <label class="sr-only" for="q404">Search</label>
+        <input id="q404" name="q" type="search" placeholder="Search a stone…">
+        <button type="submit">Search</button>
+      </form>
+      <div class="btns" style="margin-top:28px">
+        <a class="btn btn--gold" href="/">Home</a>
+        <a class="btn btn--ghost" href="/stones/">A–Z index</a>
+      </div>
+    </div>
+  </section>
+</Base>

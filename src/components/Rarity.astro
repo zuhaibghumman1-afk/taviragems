@@ -1,0 +1,11 @@
+---
+import { getRarity } from '../data/taxonomy';
+interface Props { slug?: string | null }
+const r = getRarity(Astro.props.slug ?? undefined);
+---
+{r && (
+  <span class="rarity" aria-label={`Rarity: ${r.name}`}>
+    {[1, 2, 3, 4].map((i) => <i class={i <= r.level ? 'on' : ''} aria-hidden="true"></i>)}
+    <span>{r.name}</span>
+  </span>
+)}

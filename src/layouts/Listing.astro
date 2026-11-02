@@ -1,0 +1,45 @@
+---
+import Base from './Base.astro';
+import StoneCard from '../components/StoneCard.astro';
+import type { Stone } from '../lib/stones';
+
+interface Crumb { name: string; url?: string }
+interface Props {
+  title: string;
+  seoTitle?: string;
+  description: string;
+  crumbs: Crumb[];
+  stones: Stone[];
+  subcats?: { name: string; url: string; current?: boolean }[];
+  emptyText?: string;
+}
+const { title, seoTitle, description, crumbs, stones, subcats = [], emptyText = 'Stones for this page are being written and will appear here soon.' } = Astro.props;
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, ...(c.url ? { item: `https://taviragems.com${c.url}` } : {}) })),
+};
+---
+<Base title={seoTitle ?? title} description={description} schema={schema}>
+  <section class="dark">
+    <div class="wrap page-head">
+      <ol class="crumbs">
+        {crumbs.map((c) => <li>{c.url ? <a href={c.url}>{c.name}</a> : <span aria-current="page">{c.name}</span>}</li>)}
+      </ol>
+      <h1>{title}</h1>
+      <p class="intro">{description}</p>
+      {subcats.length > 0 && (
+        <nav class="subcats" aria-label="Categories">
+          {subcats.map((s) => <a href={s.url} aria-current={s.current ? 'page' : undefined}>{s.name}</a>)}
+        </nav>
+      )}
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap">
+      <slot name="before" />
+      {stones.length ? <div class="cards">{stones.map((s) => <StoneCard stone={s} />)}</div> : <p class="empty">{emptyText}</p>}
+      <slot />
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,19 @@
+---
+import Listing from '../../layouts/Listing.astro';
+import { sections } from '../../data/taxonomy';
+import { getStones } from '../../lib/stones';
+
+export function getStaticPaths() {
+  return sections.map((s) => ({ params: { section: s.slug } }));
+}
+const section = sections.find((s) => s.slug === Astro.params.section)!;
+const stones = (await getStones()).filter((s) => s.data.section === section.slug);
+---
+<Listing
+  title={section.name}
+  seoTitle={`${section.name}: Types, Facts & Guide`}
+  description={section.description}
+  crumbs={[{ name: 'Home', url: '/' }, { name: section.name }]}
+  subcats={section.categories.map((c) => ({ name: c.name, url: `/${section.slug}/${c.slug}/` }))}
+  stones={stones}
+/>
